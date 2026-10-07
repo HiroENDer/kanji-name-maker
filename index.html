@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>名前漢字化メーカー｜Ateji Name Maker</title>
+<style>
+  :root{
+    --bg:#f6f3ee; --paper:#fffdfa; --ink:#201c19; --muted:#746b64;
+    --line:#ded7cf; --accent:#8d2335; --accent2:#d8b06c; --shadow:0 18px 50px rgba(45,34,27,.10);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; color:var(--ink); background:
+    radial-gradient(circle at 15% 0%, #f2e4d6 0 18%, transparent 42%),
+    radial-gradient(circle at 100% 20%, #efe2e3 0 15%, transparent 38%),
+    var(--bg);
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic UI","Noto Sans JP",sans-serif;
+    min-height:100vh;
+  }
+  .wrap{max-width:1050px;margin:auto;padding:46px 20px 70px}
+  header{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin-bottom:24px}
+  .kicker{font-size:12px;letter-spacing:.18em;color:var(--accent);font-weight:800;text-transform:uppercase}
+  h1{font-family:"Yu Mincho","Hiragino Mincho ProN",serif;font-size:clamp(34px,6vw,70px);line-height:.98;margin:8px 0 12px;letter-spacing:-.05em}
+  .sub{color:var(--muted);font-size:14px;line-height:1.8;max-width:650px}
+  .stamp{border:2px solid var(--accent);color:var(--accent);width:70px;height:70px;border-radius:50%;display:grid;place-items:center;
+    font-family:"Yu Mincho","Hiragino Mincho ProN",serif;font-weight:900;transform:rotate(7deg);flex:0 0 auto}
+  .panel{background:rgba(255,253,250,.88);backdrop-filter: blur(12px);border:1px solid rgba(255,255,255,.8);box-shadow:var(--shadow);border-radius:24px;padding:22px}
+  .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+  label{display:block;font-size:12px;font-weight:800;letter-spacing:.06em;margin:0 0 8px;color:#564d47}
+  input,select,button{font:inherit}
+  input,select{width:100%;border:1px solid var(--line);border-radius:14px;padding:14px 15px;background:#fff;color:var(--ink);outline:none}
+  input:focus,select:focus{border-color:#b88b94;box-shadow:0 0 0 4px rgba(141,35,53,.08)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+  .actions{display:flex;gap:10px;align-items:end}
+  button{border:0;border-radius:14px;padding:14px 18px;font-weight:800;cursor:pointer;transition:.18s transform,.18s opacity,.18s box-shadow}
+  button:hover{transform:translateY(-1px)}
+  .primary{background:var(--accent);color:white;box-shadow:0 9px 20px rgba(141,35,53,.2);width:100%}
+  .secondary{background:#efe9e3;color:#514741}
+  .hint{font-size:11px;color:#897e76;margin-top:7px;line-height:1.6}
+  .readingLine{display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:15px;border-top:1px dashed var(--line)}
+  .readingLine b{font-family:"Yu Mincho","Hiragino Mincho ProN",serif;font-size:22px}
+  .results{margin-top:22px}
+  .resultHead{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:4px 2px 12px}
+  .resultHead h2{margin:0;font-size:17px}
+  #status{font-size:12px;color:var(--muted)}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:18px;min-height:178px;position:relative;overflow:hidden}
+  .card::after{content:"";position:absolute;right:-22px;top:-25px;width:80px;height:80px;border-radius:50%;border:1px solid #eadfd5}
+  .rank{font-size:10px;color:#a3958b;letter-spacing:.12em;font-weight:800}
+  .kanji{font-family:"Yu Mincho","Hiragino Mincho ProN",serif;font-size:42px;line-height:1.2;letter-spacing:.04em;margin:8px 0 3px;word-break:break-all}
+  .ruby{font-size:12px;color:var(--accent);font-weight:700}
+  .meaning{font-size:12px;line-height:1.7;color:#655b54;margin-top:12px;min-height:40px}
+  .copy{margin-top:12px;padding:8px 11px;border:1px solid var(--line);background:white;color:#4f4640;border-radius:10px;font-size:11px}
+  footer{color:#8c8179;font-size:11px;line-height:1.7;margin-top:18px;padding:0 4px}
+  .badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#f0e5e6;color:#7e2333;font-size:10px;font-weight:800}
+  @media(max-width:780px){
+    .grid,.row{grid-template-columns:1fr}
+    .cards{grid-template-columns:1fr}
+    header{align-items:flex-start}.stamp{width:58px;height:58px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="kicker">ATEJI NAME MAKER</div>
+      <h1>名前漢字化メーカー</h1>
+      <div class="sub">欧米人の名前を、日本語の音に寄せながら漢字の当て字にします。英字から読みを自動推定し、必要ならカタカナだけ直して生成できます。</div>
+    </div>
+    <div class="stamp">名<br>漢字</div>
+  </header>
+
+  <section class="panel">
+    <div class="grid">
+      <div>
+        <label for="name">NAME / 英字名</label>
+        <input id="name" autocomplete="off" placeholder="例：Michael / Emily / Sophia / George" value="Michael">
+        <div class="hint">一般的な名前は辞書優先。辞書にない名前は簡易的なローマ字読みで推定します。</div>
+      </div>
+      <div>
+        <label for="style">STYLE / 雰囲気</label>
+        <select id="style">
+          <option value="natural">自然・上品</option>
+          <option value="cool">クール・強め</option>
+          <option value="bright">華やか・可愛い</option>
+          <option value="classic">古風・和風</option>
+          <option value="yankee">夜露死苦系</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="reading">READING / 読み（編集可）</label>
+        <input id="reading" placeholder="マイケル">
+        <div class="hint">発音が違うときは、ここをカタカナで直すと結果がかなり良くなります。</div>
+      </div>
+      <div class="actions">
+        <button class="primary" id="make">漢字化する</button>
+        <button class="secondary" id="shuffle" title="同じ読みで候補を作り直す">再抽選</button>
+      </div>
+    </div>
+
+    <div class="readingLine">
+      <span class="badge">推定読み</span>
+      <b id="readingPreview">マイケル</b>
+    </div>
+  </section>
+
+  <section class="results">
+    <div class="resultHead">
+      <h2>候補</h2>
+      <span id="status">6案生成します</span>
+    </div>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <footer>
+    ※これは「正式な漢字表記」ではなく、音と字義を楽しむ当て字ジェネレーターです。人名として実在する読み方だけに限定していません。<br>
+    ※「夜露死苦系」は、音より世界観を優先することがあります。
+  </footer>
+</div>
+
+<script>
+const NAME_DICT = {
+  "michael":"マイケル","john":"ジョン","james":"ジェームズ","robert":"ロバート","william":"ウィリアム","david":"デイビッド",
+  "richard":"リチャード","joseph":"ジョセフ","thomas":"トーマス","charles":"チャールズ","christopher":"クリストファー",
+  "daniel":"ダニエル","matthew":"マシュー","anthony":"アンソニー","mark":"マーク","steven":"スティーヴン","stephen":"スティーヴン",
+  "paul":"ポール","andrew":"アンドリュー","joshua":"ジョシュア","kevin":"ケヴィン","brian":"ブライアン","george":"ジョージ",
+  "edward":"エドワード","jason":"ジェイソン","ryan":"ライアン","jacob":"ジェイコブ","nicholas":"ニコラス","eric":"エリック",
+  "jonathan":"ジョナサン","justin":"ジャスティン","scott":"スコット","brandon":"ブランドン","benjamin":"ベンジャミン",
+  "samuel":"サミュエル","gregory":"グレゴリー","frank":"フランク","alexander":"アレクサンダー","patrick":"パトリック",
+  "jack":"ジャック","henry":"ヘンリー","lucas":"ルーカス","noah":"ノア","liam":"リアム","oliver":"オリヴァー",
+  "mary":"メアリー","patricia":"パトリシア","jennifer":"ジェニファー","linda":"リンダ","elizabeth":"エリザベス",
+  "barbara":"バーバラ","susan":"スーザン","jessica":"ジェシカ","sarah":"サラ","karen":"カレン","lisa":"リサ",
+  "nancy":"ナンシー","margaret":"マーガレット","ashley":"アシュリー","kimberly":"キンバリー","emily":"エミリー",
+  "michelle":"ミシェル","amanda":"アマンダ","melissa":"メリッサ","stephanie":"ステファニー","rebecca":"レベッカ",
+  "laura":"ローラ","amy":"エイミー","angela":"アンジェラ","anna":"アナ","emma":"エマ","nicole":"ニコール",
+  "samantha":"サマンサ","rachel":"レイチェル","heather":"ヘザー","victoria":"ヴィクトリア","olivia":"オリヴィア",
+  "sophia":"ソフィア","isabella":"イザベラ","charlotte":"シャーロット","amelia":"アメリア","mia":"ミア","evelyn":"エヴリン",
+  "luna":"ルナ","camila":"カミラ","chloe":"クロエ","zoe":"ゾーイ","grace":"グレイス","lily":"リリー","hannah":"ハンナ",
+  "audrey":"オードリー","claire":"クレア","alice":"アリス",
+  "pierre":"ピエール","jean":"ジャン","louis":"ルイ","marie":"マリー","francois":"フランソワ","luca":"ルカ",
+  "matteo":"マッテオ","marco":"マルコ","giovanni":"ジョヴァンニ","hans":"ハンス","klaus":"クラウス","stefan":"ステファン",
+  "nikolai":"ニコライ","ivan":"イヴァン","diego":"ディエゴ","carlos":"カルロス","miguel":"ミゲル","antonio":"アントニオ"
+};
+
+const KANJI = {
+ "ア":["亜","愛","彩","明"],"イ":["伊","依","維","衣"],"ウ":["宇","羽","有","優"],"エ":["恵","江","絵","慧"],"オ":["央","緒","桜","凰"],
+ "カ":["華","佳","香","嘉"],"キ":["希","輝","樹","貴"],"ク":["久","玖","空","駆"],"ケ":["圭","景","慧","啓"],"コ":["湖","心","光","幸"],
+ "サ":["紗","沙","冴","佐"],"シ":["志","紫","詩","士"],"ス":["寿","澄","朱","須"],"セ":["世","瀬","星","聖"],"ソ":["想","奏","蒼","宗"],
+ "タ":["多","太","汰","拓"],"チ":["千","智","知","地"],"ツ":["津","都","月","通"],"テ":["天","典","輝","帝"],"ト":["斗","都","登","翔"],
+ "ナ":["奈","那","凪","南"],"ニ":["仁","丹","虹","二"],"ヌ":["奴","沼","温","縫"],"ネ":["音","寧","根","祢"],"ノ":["乃","野","望","埜"],
+ "ハ":["羽","波","葉","覇"],"ヒ":["妃","陽","緋","飛"],"フ":["風","芙","富","歩"],"ヘ":["辺","平","碧","兵"],"ホ":["穂","歩","帆","誉"],
+ "マ":["真","麻","舞","茉"],"ミ":["美","実","魅","海"],"ム":["夢","武","霧","睦"],"メ":["芽","愛","明","萌"],"モ":["萌","桃","茂","望"],
+ "ヤ":["弥","矢","夜","耶"],"ユ":["優","結","悠","勇"],"ヨ":["世","陽","代","夜"],
+ "ラ":["羅","良","来","蘭"],"リ":["莉","里","理","凛"],"ル":["瑠","流","琉","留"],"レ":["怜","玲","麗","礼"],"ロ":["路","朗","露","呂"],
+ "ワ":["和","羽","輪","環"],"ン":["恩","音","允","雲"],
+ "ガ":["雅","賀","我","牙"],"ギ":["義","儀","輝","祇"],"グ":["具","玖","愚","郡"],"ゲ":["芸","玄","源","月"],"ゴ":["吾","護","悟","豪"],
+ "ザ":["座","沙","挫","嵯"],"ジ":["慈","路","治","侍"],"ズ":["寿","珠","図","瑞"],"ゼ":["是","世","勢","善"],"ゾ":["造","蔵","像","空"],
+ "ダ":["太","陀","打","蛇"],"ヂ":["地","治","智","慈"],"ヅ":["津","都","頭","瑞"],"デ":["出","天","伝","帝"],"ド":["土","堂","道","怒"],
+ "バ":["馬","羽","覇","波"],"ビ":["美","備","毘","緋"],"ブ":["武","舞","風","仏"],"ベ":["辺","紅","米","兵"],"ボ":["望","歩","母","慕"],
+ "パ":["波","巴","羽","破"],"ピ":["妃","陽","飛","美"],"プ":["風","歩","富","普"],"ペ":["平","辺","兵","紅"],"ポ":["歩","穂","宝","保"],
+ "ヴ":["武","舞","羽","富"],
+ "キャ":["華","伽","叶","響"],"キュ":["久","玖","究","響"],"キョ":["京","響","恭","鏡"],
+ "シャ":["紗","沙","斜","射"],"シュ":["朱","珠","秀","修"],"ショ":["翔","章","照","昇"],
+ "チャ":["茶","智","千","蝶"],"チュ":["宙","忠","珠","中"],"チョ":["蝶","長","兆","朝"],
+ "ニャ":["仁","弐","柔","若"],"ニュ":["入","乳","柔","優"],"ニョ":["如","女","寧","仁"],
+ "ヒャ":["陽","妃","飛","百"],"ヒュ":["飛","優","彪","風"],"ヒョ":["彪","氷","表","兵"],
+ "ミャ":["美","宮","雅","妙"],"ミュ":["美","夢","優","妙"],"ミョ":["妙","明","美","命"],
+ "リャ":["良","羅","凌","涼"],"リュ":["琉","龍","流","隆"],"リョ":["涼","凌","亮","龍"],
+ "ギャ":["雅","伽","牙","我"],"ギュ":["牛","玖","義","求"],"ギョ":["暁","業","行","玉"],
+ "ジャ":["慈","邪","蛇","侍"],"ジュ":["樹","寿","珠","呪"],"ジョ":["丈","城","情","上"],
+ "ビャ":["美","雅","飛","白"],"ビュ":["美","優","武","風"],"ビョ":["秒","苗","美","描"],
+ "ピャ":["妃","陽","飛","百"],"ピュ":["優","飛","風","美"],"ピョ":["彪","氷","飛","票"],
+ "ティ":["帝","天","貞","輝"],"ディ":["大","帝","出","慈"],"ファ":["芙","華","風","羽"],"フィ":["妃","緋","飛","美"],
+ "フェ":["風","慧","紅","平"],"フォ":["鳳","風","歩","宝"],"ウィ":["維","威","宇","羽"],"ウェ":["上","恵","羽","慧"],"ウォ":["央","王","和","凰"],
+ "ヴィ":["美","緋","毘","微"],"ヴァ":["羽","和","巴","覇"],"ヴェ":["紅","慧","辺","兵"],"ヴォ":["望","歩","慕","鳳"],
+ "ジェ":["慈","路","是","慧"],"チェ":["智","千","知","世"],"ツァ":["津","紗","都","佐"],"ツィ":["津","維","都","慈"],
+ "ツェ":["津","世","都","瀬"],"ツォ":["津","緒","都","宗"]
+};
+
+const MEANING = {
+"亜":"異国・広がり","愛":"愛情","彩":"彩り","明":"明るさ","伊":"気品","依":"寄り添う","維":"つなぐ","衣":"装い","宇":"大空","羽":"軽やかさ","有":"豊かさ","優":"やさしさ",
+"恵":"恵み","江":"水辺","絵":"美しさ","慧":"聡明","央":"中心","緒":"つながり","桜":"華やかさ","凰":"気高さ","華":"華やかさ","佳":"美しさ","香":"香り","嘉":"よろこび",
+"希":"希望","輝":"輝き","樹":"成長","貴":"尊さ","久":"永続","玖":"美しい黒石","空":"自由","駆":"躍動","圭":"玉のような品格","景":"景色・光","啓":"ひらく",
+"湖":"静けさ","心":"心","光":"光","幸":"幸福","紗":"繊細さ","沙":"清らかさ","冴":"冴え","佐":"助ける","志":"志","紫":"高貴","詩":"感性","士":"強さ",
+"寿":"祝福","澄":"澄んだ心","朱":"鮮やかさ","須":"確かさ","世":"世界","瀬":"流れ","星":"星","聖":"清らかさ","想":"想い","奏":"調和","蒼":"深い青","宗":"芯",
+"多":"豊かさ","太":"おおらかさ","汰":"洗練","拓":"切り拓く","千":"多くの可能性","智":"知恵","知":"知性","地":"大地","津":"港・つながり","都":"都・洗練",
+"月":"月","通":"通じる","天":"大空","典":"品格","帝":"威厳","斗":"星・器","登":"向上","翔":"飛躍","奈":"やわらかさ","那":"優美","凪":"静けさ","南":"温かさ",
+"仁":"思いやり","丹":"真心","虹":"希望","二":"並び","音":"響き","寧":"穏やかさ","根":"根強さ","祢":"古風な響き","乃":"やわらかさ","野":"自然","望":"希望",
+"葉":"生命","覇":"力強さ","妃":"気品","陽":"太陽","緋":"鮮やかさ","飛":"飛躍","風":"自由","芙":"上品さ","富":"豊かさ","歩":"歩み","穂":"実り","帆":"前進","誉":"名誉",
+"真":"誠実","麻":"しなやかさ","舞":"舞う美しさ","茉":"清楚","美":"美しさ","実":"実り","魅":"魅力","海":"広さ","夢":"夢","武":"強さ","霧":"神秘","睦":"調和",
+"芽":"成長","萌":"芽吹き","桃":"親しみ","茂":"繁栄","弥":"ますます","矢":"まっすぐ","夜":"夜の美学","耶":"古風な余韻","結":"結び","悠":"悠然","勇":"勇気",
+"羅":"きらびやかさ","良":"よさ","来":"未来","蘭":"気品","莉":"可憐さ","里":"故郷","理":"理知","凛":"凛々しさ","瑠":"宝石","流":"流れ","琉":"宝石の輝き","留":"つなぎとめる",
+"怜":"聡明","玲":"澄んだ玉音","麗":"美しさ","礼":"礼節","路":"道","朗":"朗らか","露":"夜露の風情","呂":"古風な音","和":"調和","輪":"つながり","環":"めぐり",
+"恩":"恩","允":"誠実","雲":"自由","雅":"雅やか","賀":"祝い","我":"我を貫く","牙":"鋭さ","義":"義","儀":"礼儀","祇":"古風な神秘",
+"具":"備える","愚":"荒々しさ","郡":"まとまり","玄":"奥深さ","源":"源","吾":"自分","護":"守る","悟":"悟り","豪":"豪胆",
+"慈":"慈しみ","治":"整える","侍":"侍の強さ","瑞":"めでたさ","是":"肯定","善":"善","陀":"異国的な響き","打":"力強さ","蛇":"妖しさ","出":"前進","伝":"伝える","怒":"激情",
+"馬":"疾走","毘":"守護","仏":"超然","紅":"鮮やかさ","米":"実り","波":"しなやかさ","破":"突破","巴":"めぐり","宝":"宝","保":"守る",
+"京":"都・洗練","響":"響き","恭":"礼節","鏡":"澄明","秀":"秀でる","修":"磨く","章":"明らか","照":"照らす","昇":"上昇","茶":"和の趣","蝶":"華麗","宙":"宇宙",
+"忠":"誠実","中":"芯","長":"成長","兆":"兆し","朝":"始まり","柔":"やわらかさ","若":"若々しさ","入":"受け入れる","百":"豊かさ","彪":"勇ましさ","氷":"透明感","表":"表現",
+"宮":"気品","妙":"奥ゆかしさ","命":"生命","凌":"しなやかな強さ","涼":"清涼","龍":"力と飛躍","隆":"栄える","亮":"明るさ","牛":"力","求":"探求","暁":"夜明け","業":"成し遂げる",
+"行":"進む","玉":"宝石","邪":"反骨","呪":"妖しさ","丈":"丈夫さ","城":"守り","情":"情熱","上":"向上","苗":"成長","描":"表現","貞":"芯","大":"大きさ","鳳":"高貴",
+"威":"威厳","王":"王者","微":"繊細さ"
+};
+
+const STYLE_BIAS = {
+  natural:["愛","恵","佳","美","真","優","里","理","玲","和","奈","希","莉","瑠","凛","仁","悠"],
+  cool:["蒼","凛","凌","龍","牙","斗","輝","翔","玲","玖","玄","駆","覇","帝","雅","琉"],
+  bright:["華","彩","愛","美","舞","莉","桃","萌","桜","星","陽","妃","羽","玲","瑠","蘭"],
+  classic:["伊","志","世","乃","弥","雅","仁","礼","嘉","貴","宗","典","圭","緒","和","環"],
+  yankee:["夜","露","死","苦","愛","羅","武","勇","仏","恥","義","理","魔","怒","牙","龍","虎","闘","爆","紅","零","悪","獄","魂","神","帝","皇","覇"]
+};
+
+const YANKEE_SPECIAL = {
+  "ヨロシク":"夜露死苦",
+  "アイラブユー":"愛羅武勇",
+  "アイシテル":"愛死天流",
+  "ブッチギリ":"仏恥義理"
+};
+
+let salt = 0;
+
+function normalizeName(s){
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z]/g,"");
+}
+
+function inferReading(name){
+  const key = normalizeName(name);
+  if(!key) return "";
+  if(NAME_DICT[key]) return NAME_DICT[key];
+
+  // 簡易フォールバック：英語発音の完全再現ではなく、ローマ字寄りの推定。
+  let s = key
+    .replace(/tion/g,"shon").replace(/sion/g,"zhon").replace(/ph/g,"f")
+    .replace(/tch/g,"ch").replace(/sch/g,"sh").replace(/sh/g,"sy")
+    .replace(/ch/g,"ty").replace(/th/g,"s").replace(/qu/g,"kw")
+    .replace(/ck/g,"k").replace(/dge/g,"j").replace(/gi(?=[eiy])/g,"ji")
+    .replace(/ge(?=[eiy])/g,"je").replace(/c(?=[eiy])/g,"s").replace(/c/g,"k")
+    .replace(/x/g,"ks");
+
+  const map = {
+    kya:"キャ",kyu:"キュ",kyo:"キョ",sya:"シャ",syu:"シュ",syo:"ショ",tya:"チャ",tyu:"チュ",tyo:"チョ",
+    nya:"ニャ",nyu:"ニュ",nyo:"ニョ",hya:"ヒャ",hyu:"ヒュ",hyo:"ヒョ",mya:"ミャ",myu:"ミュ",myo:"ミョ",
+    rya:"リャ",ryu:"リュ",ryo:"リョ",gya:"ギャ",gyu:"ギュ",gyo:"ギョ",jya:"ジャ",jyu:"ジュ",jyo:"ジョ",
+    bya:"ビャ",byu:"ビュ",byo:"ビョ",pya:"ピャ",pyu:"ピュ",pyo:"ピョ",
+    fa:"ファ",fi:"フィ",fe:"フェ",fo:"フォ",va:"ヴァ",vi:"ヴィ",ve:"ヴェ",vo:"ヴォ",
+    wi:"ウィ",we:"ウェ",wo:"ウォ",je:"ジェ",ti:"ティ",di:"ディ",
+    ka:"カ",ki:"キ",ku:"ク",ke:"ケ",ko:"コ",sa:"サ",si:"シ",su:"ス",se:"セ",so:"ソ",
+    ta:"タ",ti2:"チ",tu:"ツ",te:"テ",to:"ト",na:"ナ",ni:"ニ",nu:"ヌ",ne:"ネ",no:"ノ",
+    ha:"ハ",hi:"ヒ",hu:"フ",he:"ヘ",ho:"ホ",ma:"マ",mi:"ミ",mu:"ム",me:"メ",mo:"モ",
+    ya:"ヤ",yu:"ユ",yo:"ヨ",ra:"ラ",ri:"リ",ru:"ル",re:"レ",ro:"ロ",wa:"ワ",
+    ga:"ガ",gi:"ギ",gu:"グ",ge:"ゲ",go:"ゴ",za:"ザ",zi:"ジ",zu:"ズ",ze:"ゼ",zo:"ゾ",
+    da:"ダ",de:"デ",do:"ド",ba:"バ",bi:"ビ",bu:"ブ",be:"ベ",bo:"ボ",pa:"パ",pi:"ピ",pu:"プ",pe:"ペ",po:"ポ",
+    a:"ア",i:"イ",u:"ウ",e:"エ",o:"オ",n:"ン"
+  };
+
+  let out="", i=0;
+  while(i<s.length){
+    let hit=null;
+    for(const len of [3,2,1]){
+      const part=s.slice(i,i+len);
+      if(map[part]){hit=map[part]; i+=len; break;}
+    }
+    if(hit){out+=hit;continue;}
+    // 子音単独は次の母音が無ければ「ウ」系で逃がす
+    const c=s[i];
+    const cons={k:"ク",g:"グ",s:"ス",z:"ズ",t:"ト",d:"ド",n:"ン",h:"フ",b:"ブ",p:"プ",m:"ム",r:"ル",l:"ル",f:"フ",v:"ヴ",j:"ジ",w:"ウ",y:"イ"};
+    out += cons[c] || "";
+    i++;
+  }
+  return out || key.toUpperCase();
+}
+
+function cleanKatakana(s){
+  return s.trim().replace(/[ぁ-ゖ]/g, ch => String.fromCharCode(ch.charCodeAt(0)+0x60)).replace(/\s+/g,"");
+}
+
+function splitMora(kana){
+  const small = new Set(["ャ","ュ","ョ","ァ","ィ","ゥ","ェ","ォ"]);
+  const arr=[];
+  for(const ch of kana){
+    if(small.has(ch) && arr.length){ arr[arr.length-1]+=ch; }
+    else if(ch==="ー" && arr.length){ arr[arr.length-1]+="ー"; }
+    else if(ch==="ッ"){ arr.push("ッ"); }
+    else arr.push(ch);
+  }
+  return arr;
+}
+
+function baseMora(m){
+  return m.replace(/ー/g,"");
+}
+
+function seeded(str){
+  let h=2166136261;
+  for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}
+  return ()=>{ h += 0x6D2B79F5; let t=h; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; };
+}
+
+function chooseForMora(m, style, rnd, pos){
+  if(m==="ッ") return "";
+  const b=baseMora(m);
+  let choices = (KANJI[b] || KANJI[b[0]] || ["音"]).slice();
+  const bias=STYLE_BIAS[style]||[];
+  choices.sort((a,b2)=>{
+    const ai=bias.indexOf(a), bi=bias.indexOf(b2);
+    return (ai<0?99:ai)-(bi<0?99:bi);
+  });
+  const top = Math.min(choices.length, style==="yankee"?4:3);
+  let chosen=choices[Math.floor(rnd()*top)];
+
+  // 長音は「央」「王」「桜」などを足さず、前の漢字の読みを伸ばす扱い。
+  if(m.includes("ー")) return chosen;
+
+  return chosen;
+}
+
+function yankeeTransform(kana, rnd){
+  if(YANKEE_SPECIAL[kana]) return YANKEE_SPECIAL[kana];
+  const mora=splitMora(kana);
+  const edgy = {
+    "ヨ":"夜","ロ":"露","シ":"死","ク":"苦","ア":"愛","イ":"威","ラ":"羅","ブ":"武","ユ":"勇",
+    "ヤ":"夜","マ":"魔","ド":"怒","ガ":"牙","リュ":"龍","リ":"理","ト":"闘","バ":"爆","コ":"虎",
+    "レ":"零","アク":"悪","ゴク":"獄","ソウ":"魂","ジン":"神","テイ":"帝","オウ":"皇","ハ":"覇",
+    "ジョ":"丈","ン":"恩","ル":"流","カ":"華","ミ":"魅","キ":"鬼","エ":"恵","ナ":"那","サ":"沙"
+  };
+  return mora.map(m=>edgy[baseMora(m)] || chooseForMora(m,"yankee",rnd,0)).join("");
+}
+
+function buildCandidate(kana, style, index){
+  const rnd=seeded(kana+"|"+style+"|"+salt+"|"+index);
+  if(style==="yankee") return yankeeTransform(kana,rnd);
+  const mora=splitMora(kana);
+  let out="";
+  mora.forEach((m,i)=>{
+    if(m==="ッ") return;
+    out += chooseForMora(m,style,rnd,i);
+  });
+  return out;
+}
+
+function meaningText(word){
+  const items=[...word].map(k=>MEANING[k]).filter(Boolean);
+  const unique=[...new Set(items)].slice(0,4);
+  return unique.length ? unique.join("・") : "音の響きを優先した当て字";
+}
+
+function make(){
+  const name=document.getElementById("name").value.trim();
+  let reading=cleanKatakana(document.getElementById("reading").value);
+  if(!reading){
+    reading=inferReading(name);
+    document.getElementById("reading").value=reading;
+  }
+  document.getElementById("readingPreview").textContent=reading||"—";
+  const style=document.getElementById("style").value;
+  const cards=document.getElementById("cards");
+  cards.innerHTML="";
+  if(!reading){
+    document.getElementById("status").textContent="名前か読みを入力してください";
+    return;
+  }
+  const used=new Set();
+  let tries=0;
+  while(used.size<6 && tries<40){
+    const k=buildCandidate(reading,style,tries);
+    if(k) used.add(k);
+    tries++;
+  }
+  [...used].slice(0,6).forEach((kanji,i)=>{
+    const el=document.createElement("article");
+    el.className="card";
+    el.innerHTML=`
+      <div class="rank">CANDIDATE ${String(i+1).padStart(2,"0")}</div>
+      <div class="kanji">${kanji}</div>
+      <div class="ruby">${reading}</div>
+      <div class="meaning">${meaningText(kanji)}</div>
+      <button class="copy" data-copy="${kanji}">コピー</button>`;
+    cards.appendChild(el);
+  });
+  document.getElementById("status").textContent=`${name||reading} → ${reading}`;
+}
+
+function updateReading(){
+  const name=document.getElementById("name").value;
+  const inferred=inferReading(name);
+  document.getElementById("reading").value=inferred;
+  document.getElementById("readingPreview").textContent=inferred||"—";
+}
+
+document.getElementById("name").addEventListener("input",updateReading);
+document.getElementById("reading").addEventListener("input",e=>{
+  document.getElementById("readingPreview").textContent=cleanKatakana(e.target.value)||"—";
+});
+document.getElementById("make").addEventListener("click",make);
+document.getElementById("shuffle").addEventListener("click",()=>{salt++;make();});
+document.getElementById("style").addEventListener("change",make);
+document.addEventListener("click",async e=>{
+  if(e.target.matches("[data-copy]")){
+    const t=e.target.dataset.copy;
+    try{await navigator.clipboard.writeText(t);e.target.textContent="コピー済み";setTimeout(()=>e.target.textContent="コピー",900);}
+    catch{prompt("コピーしてください",t);}
+  }
+});
+document.getElementById("name").addEventListener("keydown",e=>{if(e.key==="Enter")make()});
+document.getElementById("reading").addEventListener("keydown",e=>{if(e.key==="Enter")make()});
+
+updateReading();
+make();
+</script>
+</body>
+</html>
